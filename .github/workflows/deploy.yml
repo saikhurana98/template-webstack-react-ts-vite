@@ -25,16 +25,33 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "yarn"
+
       - name: Enable Corepack for Yarn
         run: corepack enable
 
+      - name: Prepare yarn corepack
+        run: corepack prepare yarn@stable --activate
+      
+      # Find yarn, if not found of if the version doesn't match with the number mentioned in the package.json, alian yarn to "corepack yarn"
+
       - name: Alias yarn to corepack yarn
-        run: alias yarn="corepack yarn"
+        run: |
+          if ! command -v yarn &> /dev/null || [ "$(yarn --version)" != "$(node -p "require('./package.json').packageManager.split('@')[1]")" ]; then
+            echo "Aliasing yarn to corepack yarn"
+            sudo ln -sf "$(which corepack)" /usr/local/bin/yarn
+          fi
+
+      - name: Enable Corepack for Yarn
+        run: corepack enable
+
+      - name: Prepare yarn corepack
+        run: corepack prepare yarn@stable --activate
+
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
