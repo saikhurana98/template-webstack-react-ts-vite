@@ -11,11 +11,10 @@ export class Item {
   @PrimaryGeneratedColumn()
   id!: number;
 
-
-  @Column({ type: 'varchar', length: 255 })
+  @Column({type: "varchar"})
   name!: string;
 
-  @Column({ type: 'text' })
+  @Column({type: "varchar"})
   description!: string;
 
   @CreateDateColumn()

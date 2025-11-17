@@ -18,7 +18,7 @@ function App() {
 
   const fetchItems = async () => {
     try {
-      const response = await fetch('http://localhost:5050/api/items');
+      const response = await fetch('http://localhost:5100/api/items');
       if (!response.ok) {
         throw new Error('Failed to fetch items');
       }
@@ -37,19 +37,19 @@ function App() {
         <h1>Template WebApp</h1>
         <p>React + TypeScript + Vite + Node.js + SQLite</p>
       </header>
-      
+
       <main className="App-main">
         <section className="items-section">
           <h2>Sample Items from Database</h2>
-          
+
           {loading && <p>Loading...</p>}
-          
+
           {error && <p className="error">Error: {error}</p>}
-          
+
           {!loading && !error && items.length === 0 && (
             <p>No items found. Start the backend server to see data.</p>
           )}
-          
+
           {!loading && !error && items.length > 0 && (
             <div className="items-grid">
               {items.map((item) => (
@@ -62,7 +62,7 @@ function App() {
           )}
         </section>
       </main>
-      
+
       <footer className="App-footer">
         <p>Built with ❤️ using modern web technologies</p>
       </footer>
