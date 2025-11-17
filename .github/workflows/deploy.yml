@@ -1,0 +1,138 @@
+name: CD - Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "yarn"
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Run linting
+        run: yarn lint
+        continue-on-error: false
+
+      - name: Build Frontend
+        run: yarn build:frontend
+        env:
+          # Add environment variables for production build if needed
+          NODE_ENV: production
+
+      - name: Build Backend
+        run: yarn build:backend
+        env:
+          NODE_ENV: production
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "./frontend/dist"
+
+  deploy:
+    name: Deploy to GitHub Pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Deployment successful
+        run: |
+          echo "✅ Deployment successful!"
+          echo "🌐 Site URL: ${{ steps.deployment.outputs.page_url }}"
+
+  rollback:
+    name: Rollback on Failure
+    runs-on: ubuntu-latest
+    needs: [build, deploy]
+    if: failure()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get previous successful deployment
+        id: get-previous
+        run: |
+          # Get the commit hash of the last successful deployment
+          PREVIOUS_COMMIT=$(git log --grep="Deploy to GitHub Pages" --format="%H" -n 2 | tail -n 1)
+          echo "previous_commit=$PREVIOUS_COMMIT" >> $GITHUB_OUTPUT
+          echo "⚠️ Deployment failed. Previous successful commit: $PREVIOUS_COMMIT"
+
+      - name: Notify deployment failure
+        run: |
+          echo "❌ Deployment failed and needs attention"
+          echo "📋 Failed commit: ${{ github.sha }}"
+          echo "🔄 Last successful commit: ${{ steps.get-previous.outputs.previous_commit }}"
+          echo ""
+          echo "To rollback manually, run:"
+          echo "git revert ${{ github.sha }}"
+          echo ""
+          echo "Or redeploy the previous version:"
+          echo "git checkout ${{ steps.get-previous.outputs.previous_commit }}"
+
+      - name: Create issue for failed deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Deployment Failed - Rollback Required',
+              body: `## Deployment Failure Report
+              
+              **Failed Deployment:**
+              - Commit: ${context.sha}
+              - Workflow Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}
+              - Branch: ${context.ref}
+              
+              **Previous Successful Commit:**
+              - Commit: ${{ steps.get-previous.outputs.previous_commit }}
+              
+              **Action Required:**
+              Please review the failed deployment and either:
+              1. Fix the issue and push a new commit
+              2. Revert the failed commit: \`git revert ${context.sha}\`
+              3. Manually rollback to previous version
+              
+              **Workflow Logs:**
+              [View Failed Workflow](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+              `,
+              labels: ['deployment', 'bug', 'high-priority']
+            })

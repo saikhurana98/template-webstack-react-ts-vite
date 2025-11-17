@@ -1,0 +1,44 @@
+{
+  "name": "template-webapp-react-ts-vite",
+  "version": "1.0.0",
+  "description": "A professional full-stack web application template with React, TypeScript, Vite, Node.js, and SQLite",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "install:all": "yarn install",
+    "dev:frontend": "yarn workspace frontend dev",
+    "dev:backend": "yarn workspace backend dev",
+    "dev": "concurrently \"yarn dev:backend\" \"yarn dev:frontend\"",
+    "build:frontend": "yarn workspace frontend build",
+    "build:backend": "yarn workspace backend build",
+    "build": "yarn build:backend && yarn build:frontend",
+    "lint": "yarn lint:frontend && yarn lint:backend",
+    "lint:frontend": "yarn workspace frontend lint",
+    "lint:backend": "yarn workspace backend lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.1.1"
+  },
+  "keywords": [
+    "template",
+    "react",
+    "typescript",
+    "vite",
+    "nodejs",
+    "sqlite",
+    "typeorm",
+    "full-stack"
+  ],
+  "author": "",
+  "license": "MIT",
+  "packageManager": "yarn@4.0.2"
+}
