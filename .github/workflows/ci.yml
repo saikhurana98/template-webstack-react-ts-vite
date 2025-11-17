@@ -18,6 +18,11 @@ jobs:
         with:
           node-version: "20"
           cache: "yarn"
+      - name: Enable Corepack for Yarn
+        run: corepack enable
+
+      - name: Alian yarn to corepack yarn
+        run: alias yarn="corepack yarn"
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
